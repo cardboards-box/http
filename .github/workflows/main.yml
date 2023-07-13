@@ -29,7 +29,7 @@ jobs:
           dotnet-version: '7.x'
           
       - name: Publish Http Nuget Package
-        id: publish_nuget_redis
+        id: publish_nuget_http
         uses: alirezanet/publish-nuget@v3.0.4
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Http/CardboardBox.Http.csproj
@@ -37,7 +37,7 @@ jobs:
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
           
       - name: Publish Http Files Nuget Package
-        id: publish_nuget_redis
+        id: publish_nuget_http_files
         uses: alirezanet/publish-nuget@v3.0.4
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Http.Files/CardboardBox.Http.Files.csproj
@@ -45,7 +45,7 @@ jobs:
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
           
       - name: Publish Http Html Nuget Package
-        id: publish_nuget_redis
+        id: publish_nuget_http_html
         uses: alirezanet/publish-nuget@v3.0.4
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Http.Html/CardboardBox.Http.Html.csproj

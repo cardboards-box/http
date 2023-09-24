@@ -56,7 +56,6 @@ public class FileCacheService : IFileCacheService
         if (cacheInfo != null)
             return (ReadFile(hash, cacheDir), cacheInfo.Name, cacheInfo.MimeType);
 
-
         var io = new MemoryStream();
         var (stream, _, file, type) = await _api.GetData(url);
         await stream.CopyToAsync(io);

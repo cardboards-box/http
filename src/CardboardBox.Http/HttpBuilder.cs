@@ -395,7 +395,7 @@ public class HttpBuilder : IHttpBuilder
     /// <returns>A task representing the returned deserialized result</returns>
     public async Task<T?> Json<T>(HttpResponseMessage resp)
     {
-        resp.EnsureSuccessStatusCode();
+        if (!_failWithNull) resp.EnsureSuccessStatusCode();
 
         using var rs = await resp.Content.ReadAsStreamAsync();
         return await _json.Deserialize<T>(rs);

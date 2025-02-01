@@ -1,4 +1,6 @@
-﻿namespace CardboardBox.Http;
+﻿using CardboardBox.Extensions;
+
+namespace CardboardBox.Http;
 
 using Json;
 

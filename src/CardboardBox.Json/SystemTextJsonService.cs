@@ -32,8 +32,9 @@ public class SystemTextJsonService : IJsonService
     /// </summary>
     /// <typeparam name="T">The type to deserialize to</typeparam>
     /// <param name="stream">The stream of JSON data</param>
+    /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the deserialized result</returns>
-    public async Task<T?> Deserialize<T>(Stream stream) => await JsonSerializer.DeserializeAsync<T>(stream, _settings);
+    public async Task<T?> Deserialize<T>(Stream stream, CancellationToken token = default) => await JsonSerializer.DeserializeAsync<T>(stream, _settings, token);
 
     /// <summary>
     /// Serializes the given data to JSON
@@ -49,6 +50,7 @@ public class SystemTextJsonService : IJsonService
     /// <typeparam name="T">The type of data to serialize</typeparam>
     /// <param name="data">The data to serialize</param>
     /// <param name="stream">The stream to write the serialized data to</param>
+    /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the completion of the serialization process</returns>
-    public Task Serialize<T>(T data, Stream stream) => JsonSerializer.SerializeAsync(stream, data, _settings);
+    public Task Serialize<T>(T data, Stream stream, CancellationToken token = default) => JsonSerializer.SerializeAsync(stream, data, _settings, token);
 }

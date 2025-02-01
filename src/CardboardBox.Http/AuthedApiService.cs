@@ -13,15 +13,11 @@ public class AuthedApiService<T> : ApiService where T : IAuthSettings
     /// </summary>
     /// <param name="http"></param>
     /// <param name="json"></param>
-    /// <param name="cache"></param>
-    /// <param name="logger"></param>
     /// <param name="settings"></param>
     public AuthedApiService(
         IHttpClientFactory http,
         IJsonService json,
-        ICacheService cache,
-        ILogger<ApiService> logger,
-        T settings) : base(http, json, cache, logger)
+        T settings) : base(http, json)
     {
         _settings = settings;
     }
@@ -39,7 +35,7 @@ public class AuthedApiService<T> : ApiService where T : IAuthSettings
         if (string.IsNullOrEmpty(scheme))
             scheme = "Bearer";
 
-        return base.Create(url, json, method).Authorization(_settings.Token, scheme);
+        return (IHttpBuilder)base.Create(url, json, method).Authorization(_settings.Token, scheme);
     }
 }
 

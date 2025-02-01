@@ -1,89 +1,71 @@
 ﻿namespace CardboardBox.Http;
 
 /// <summary>
-/// Provides a builder used for creating HTTP requests from the given <see cref="IHttpClientFactory"/>
+/// Providers a builder used for configuration HTTP requests from the given <see cref="IHttpClientFactory"/>
 /// </summary>
-public interface IHttpBuilder
+public interface IHttpBuilderConfig
 {
     /// <summary>
-    /// Sets the Accept header to the given value
+    /// Triggered whenever a request finishes
     /// </summary>
-    /// <param name="accept">The accept header's value</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder Accept(string accept);
+    event HttpFinishedDelegate OnFinished;
 
     /// <summary>
-    /// Sets the Method for the request
+    /// Triggers whenever a request is starting
     /// </summary>
-    /// <param name="method">The method to use</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder Method(string method);
+    event HttpStartingDelegate OnStarting;
 
     /// <summary>
-    /// Sets the URI for the request
+    /// The json service to use for serialization
     /// </summary>
-    /// <param name="uri">The URL to use</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder Uri(string uri);
+    IJsonService JsonService { get; }
+
+    /// <summary>
+    /// The client factory
+    /// </summary>
+    IHttpClientFactory Factory { get; }
 
     /// <summary>
     /// Provides a catch-all configuration object for the <see cref="HttpRequestMessage"/> for anything not handled by default
     /// </summary>
     /// <param name="config">The configuration value</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder With(Action<HttpRequestMessage>? config);
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    IHttpBuilderConfig Message(Action<HttpRequestMessage>? config);
 
     /// <summary>
-    /// Sets the body content of the request
+    /// Throws an exception if the result is null
     /// </summary>
-    /// <param name="content">The body content</param>
+    /// <param name="throwOnNull">Whether or not to throw an exception if the result is null</param>
     /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder BodyContent(HttpContent content);
+    IHttpBuilderConfig ThrowOnNull(bool throwOnNull = true);
 
     /// <summary>
-    /// Sets the body content to a <see cref="FormUrlEncodedContent"/> built from the given parameters
+    /// Adds a custom factory for creating the <see cref="HttpClient"/>
     /// </summary>
-    /// <param name="data">The parameters to be encoded</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder Body(params (string, string)[] data);
+    /// <param name="factory">The factory for creating the client</param>
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    IHttpBuilderConfig ClientFactory(Func<IHttpClientFactory, HttpClient> factory);
 
     /// <summary>
-    /// Sets the body content to the given JSON serialized object
+    /// Configures the <see cref="HttpClient"/> for the request
     /// </summary>
-    /// <typeparam name="T">The type of JSON object to send</typeparam>
-    /// <param name="data">The data to serialize</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder Body<T>(T data);
+    /// <param name="config">The configuration value</param>
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    IHttpBuilderConfig ClientConfig(Action<HttpClient>? config);
 
     /// <summary>
-    /// Adds the caching layer to the HTTP request. Caching is automatically disabled when used in conjunction with <see cref="HttpStatusResult{TSuccess, TFailure}"/>
+    /// Register a cancellation token to use for the request
     /// </summary>
-    /// <param name="enable">Whether or not to enable caching</param>
-    /// <param name="folder">The optional cache folder to use (defaults to "Cache")</param>
-    /// <param name="minutes">The optional cache minutes to use (defaults to 5 minutes)</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder Cache(bool enable = true, string? folder = null, double? minutes = null);
+    /// <param name="token">The token to cancel with</param>
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    IHttpBuilderConfig CancelWith(CancellationToken? token);
+}
 
-    /// <summary>
-    /// Instead of throwing an exception, it will log the error and return a default value
-    /// </summary>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder FailGracefully();
-
-    /// <summary>
-    /// Throw an exception if the returned status code isn't in the 200 range.
-    /// </summary>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder FailWithThrow();
-
-    /// <summary>
-    /// Sets the authorization header for the request to the given token and scheme
-    /// </summary>
-    /// <param name="token">The token to use</param>
-    /// <param name="scheme">The scheme to use (defaults to "Bearer")</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    IHttpBuilder Authorization(string token, string scheme = "Bearer");
-
+/// <summary>
+/// Provides a builder used for creating HTTP requests from the given <see cref="IHttpClientFactory"/>
+/// </summary>
+public interface IHttpBuilder : IHttpBuilderConfig
+{
     /// <summary>
     /// Executes the HTTP request and returns the results as the given type
     /// </summary>
@@ -110,100 +92,50 @@ public interface IHttpBuilder
 /// <summary>
 /// Concrete implementation of <see cref="IHttpBuilder"/>
 /// </summary>
-public class HttpBuilder : IHttpBuilder
+/// <param name="_factory">The factory to use to build <see cref="HttpClient"/></param>
+/// <param name="_json">The service to use for JSON parsing</param>
+/// <param name="_cacheService">The caching service</param>
+/// <param name="_logger">The logger to use for the client</param>
+public class HttpBuilder(
+    IHttpClientFactory _factory,
+    IJsonService _json) : IHttpBuilder
 {
-    /// <summary>
-    /// The verb for "GET"ting something
-    /// </summary>
-    public const string GET_METHOD = "GET";
-    /// <summary>
-    /// The default accept header for JSON
-    /// </summary>
-    public const string APP_JSON = "application/json";
-    /// <summary>
-    /// The default cache folder
-    /// </summary>
-    public const string CACHE_DIR = "Cache";
-    /// <summary>
-    /// The default cache minutes
-    /// </summary>
-    public const int CACHE_MIN = 5;
+    private readonly List<Action<HttpRequestMessage>> _messageEdits = [];
+    private readonly List<Action<HttpClient>> _clientEdits = [];
+    private Func<IHttpClientFactory, HttpClient>? _clientFactory;
+    private readonly CancellationTokenSource _cancelSource = new();
 
-    private readonly IHttpClientFactory _factory;
-    private readonly IJsonService _json;
-    private readonly ICacheService _cacheService;
-    private readonly ILogger _logger;
-
-    private readonly List<Action<HttpRequestMessage>> _config;
-
-    private string _method = GET_METHOD;
-    private string? _uri;
-    private string _accept = APP_JSON;
-
-    private bool _cache = false;
-    private string _cacheFolder = CACHE_DIR;
-    private double _cacheMinutes = CACHE_MIN;
     private bool _failWithNull = false;
 
     /// <summary>
-    /// 
+    /// The json service to use for serialization
     /// </summary>
-    /// <param name="factory"></param>
-    /// <param name="json"></param>
-    /// <param name="cacheService"></param>
-    /// <param name="logger"></param>
-    public HttpBuilder(
-        IHttpClientFactory factory,
-        IJsonService json,
-        ICacheService cacheService,
-        ILogger logger)
-    {
-        _factory = factory;
-        _json = json;
-        _cacheService = cacheService;
-        _config = new List<Action<HttpRequestMessage>>();
-        _logger = logger;
-    }
+    public virtual IJsonService JsonService => _json;
 
     /// <summary>
-    /// Sets the Method for the request
+    /// The client factory
     /// </summary>
-    /// <param name="method">The method to use</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder Method(string method)
-    {
-        _method = method.ToUpper().Trim();
-        return this;
-    }
+    public virtual IHttpClientFactory Factory => _factory;
 
     /// <summary>
-    /// Sets the URI for the request
+    /// Triggered whenever a request finishes
     /// </summary>
-    /// <param name="uri">The URL to use</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder Uri(string uri)
-    {
-        _uri = uri;
-        return this;
-    }
+    public virtual event HttpFinishedDelegate OnFinished = delegate { };
 
     /// <summary>
-    /// Instead of throwing an exception, it will log the error and return a default value
+    /// Triggers whenever a request is starting
     /// </summary>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder FailGracefully()
-    {
-        _failWithNull = true;
-        return this;
-    }
+    public virtual event HttpStartingDelegate OnStarting = delegate { };
 
+    #region Configuration Methods
     /// <summary>
-    /// Throw an exception if the returned status code isn't in the 200 range.
+    /// Throws an exception if the result is null
     /// </summary>
+    /// <param name="throwOnNull">Whether or not to throw an exception if the result is null</param>
     /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder FailWithThrow()
+    public virtual IHttpBuilderConfig ThrowOnNull(bool throwOnNull = true)
     {
-        _failWithNull = false;
+        _failWithNull = !throwOnNull;
         return this;
     }
 
@@ -211,108 +143,72 @@ public class HttpBuilder : IHttpBuilder
     /// Provides a catch-all configuration object for the <see cref="HttpRequestMessage"/> for anything not handled by default
     /// </summary>
     /// <param name="config">The configuration value</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder With(Action<HttpRequestMessage>? config)
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    public virtual IHttpBuilderConfig Message(Action<HttpRequestMessage>? config)
     {
         if (config != null)
-            _config.Add(config);
+            _messageEdits.Add(config);
         return this;
     }
 
     /// <summary>
-    /// Sets the Accept header to the given value
+    /// Configures the <see cref="HttpClient"/> for the request
     /// </summary>
-    /// <param name="accept">The accept header's value</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder Accept(string accept)
+    /// <param name="config">The configuration value</param>
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    public virtual IHttpBuilderConfig ClientConfig(Action<HttpClient>? config)
     {
-        _accept = accept;
+        if (config != null)
+            _clientEdits.Add(config);
         return this;
     }
 
     /// <summary>
-    /// Sets the authorization header for the request to the given token and scheme
+    /// Adds a custom factory for creating the <see cref="HttpClient"/>
     /// </summary>
-    /// <param name="token">The token to use</param>
-    /// <param name="scheme">The scheme to use (defaults to "Bearer")</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder Authorization(string token, string scheme = "Bearer")
+    /// <param name="factory">The factory for creating the client</param>
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    public virtual IHttpBuilderConfig ClientFactory(Func<IHttpClientFactory, HttpClient> factory)
     {
-        return With(c => c.Headers.Add("Authorization", $"{scheme} {token}"));
+        _clientFactory = factory;
+        return this;
     }
 
     /// <summary>
-    /// Sets the body content of the request
+    /// Register a cancellation token to use for the request
     /// </summary>
-    /// <param name="content">The body content</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder BodyContent(HttpContent content)
+    /// <param name="token">The token to cancel with</param>
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    public virtual IHttpBuilderConfig CancelWith(CancellationToken? token)
     {
-        return With(msg =>
+        token?.Register(() =>
         {
-            msg.Content = content;
+            if (_cancelSource.IsCancellationRequested) return;
+            _cancelSource.Cancel();
         });
-    }
-
-    /// <summary>
-    /// Sets the body content to the given JSON serialized object
-    /// </summary>
-    /// <typeparam name="T">The type of JSON object to send</typeparam>
-    /// <param name="data">The data to serialize</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder Body<T>(T data)
-    {
-        var str = _json.Serialize(data);
-        var json = new StringContent(str, Encoding.UTF8, APP_JSON);
-
-        return BodyContent(json);
-    }
-
-    /// <summary>
-    /// Sets the body content to a <see cref="FormUrlEncodedContent"/> built from the given parameters
-    /// </summary>
-    /// <param name="data">The parameters to be encoded</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder Body(params (string, string)[] data)
-    {
-        var kvp = data.Select(t => new KeyValuePair<string, string>(t.Item1, t.Item2));
-        var content = new FormUrlEncodedContent(kvp);
-        return BodyContent(content);
-    }
-
-    /// <summary>
-    /// Adds the caching layer to the HTTP request. Caching is automatically disabled when used in conjunction with <see cref="HttpStatusResult{TSuccess, TFailure}"/>
-    /// </summary>
-    /// <param name="enable">Whether or not to enable caching</param>
-    /// <param name="folder">The optional cache folder to use (defaults to "Cache")</param>
-    /// <param name="minutes">The optional cache minutes to use (defaults to 5 minutes)</param>
-    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public IHttpBuilder Cache(bool enable = true, string? folder = null, double? minutes = null)
-    {
-        _cache = enable;
-        _cacheFolder = folder ?? CACHE_DIR;
-        _cacheMinutes = minutes ?? CACHE_MIN;
         return this;
     }
+    #endregion
 
+    #region Output Methods
     /// <summary>
     /// Executes the HTTP request and returns the results
     /// </summary>
     /// <returns>The <see cref="HttpResponseMessage"/> results</returns>
     /// <exception cref="ArgumentNullException">Thrown if the URI is not set for the request</exception>
-    public async Task<HttpResponseMessage?> Result()
+    public virtual async Task<HttpResponseMessage?> Result()
     {
         try
         {
-            if (string.IsNullOrEmpty(_uri))
-                throw new ArgumentNullException(nameof(_uri));
-
-            using var client = _factory.CreateClient();
-            return await MakeRequest(client);
+            TriggerStarted();
+            using var client = CreateHttpClient();
+            var resp = await MakeRequest(client, false, _cancelSource.Token);
+            TriggerFinished(null);
+            return resp;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"An error occurred while running {_uri}");
+            TriggerFinished(ex);
             if (_failWithNull) return null;
 
             throw;
@@ -325,28 +221,20 @@ public class HttpBuilder : IHttpBuilder
     /// <typeparam name="T">The type to deserialize the results to</typeparam>
     /// <returns>A task representing the results of the request</returns>
     /// <exception cref="ArgumentNullException">Thrown if the URI is not set for the request</exception>
-    public async Task<T?> Result<T>()
+    public virtual async Task<T?> Result<T>()
     {
         try
         {
-            if (string.IsNullOrEmpty(_uri))
-                throw new ArgumentNullException(nameof(_uri));
-
-            var valid = _cacheService.Validate(_uri, out string? filename, _cacheFolder, _cacheMinutes);
-            if (valid && _cache && _method == GET_METHOD && !string.IsNullOrEmpty(filename)) return await _cacheService.Load<T>(filename);
-
-            using var client = _factory.CreateClient();
-            var resp = await MakeRequest(client);
-            var data = await Json<T>(resp);
-
-            if (!string.IsNullOrEmpty(filename) && _cache && _method == GET_METHOD)
-                await _cacheService.Save(data, filename);
-
+            TriggerStarted();
+            using var client = CreateHttpClient();
+            using var resp = await MakeRequest(client, true, _cancelSource.Token);
+            var data = await Json<T>(resp, _cancelSource.Token);
+            TriggerFinished(null);
             return data;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"An error occurred while running {_uri}");
+            TriggerFinished(ex);
             if (_failWithNull) return default;
 
             throw;
@@ -359,32 +247,72 @@ public class HttpBuilder : IHttpBuilder
     /// <typeparam name="TSuccess">The type to use for a successful request</typeparam>
     /// <typeparam name="TFailure">The type to use for a failed request</typeparam>
     /// <returns>A task representing the <see cref="HttpStatusResult{TSuccess, TFailure}"/> which contains the results of the request </returns>
-    public async Task<HttpStatusResult<TSuccess, TFailure>> Result<TSuccess, TFailure>()
+    public virtual async Task<HttpStatusResult<TSuccess, TFailure>> Result<TSuccess, TFailure>()
     {
-        using var client = _factory.CreateClient();
-        var resp = await MakeRequest(client);
-        return await Json<TSuccess, TFailure>(resp);
+        try
+        {
+            TriggerStarted();
+            using var client = CreateHttpClient();
+            using var resp = await MakeRequest(client, true, _cancelSource.Token);
+            var data = await Json<TSuccess, TFailure>(resp, _cancelSource.Token);
+            TriggerFinished(null);
+            return data;
+        }
+        catch (Exception ex)
+        {
+            TriggerFinished(ex);
+            if (_failWithNull) 
+                return HttpStatusResult<TSuccess, TFailure>.FromFailure(ex, HttpStatusCode.InternalServerError);
+
+            throw;
+        }
+    }
+    #endregion
+
+    #region Helper Methods
+    /// <summary>
+    /// Create the <see cref="HttpClient"/> to use for the request
+    /// </summary>
+    /// <returns>The <see cref="HttpClient"/> for the request</returns>
+    public virtual HttpClient CreateHttpClient()
+    {
+        var client = _clientFactory is not null
+            ? _clientFactory(_factory)
+            : _factory.CreateClient();
+
+        foreach(var config in _clientEdits)
+            config?.Invoke(client);
+
+        return client;
+    }
+
+    /// <summary>
+    /// Create the cancellation token to use for the request
+    /// </summary>
+    /// <returns>The cancellation token</returns>
+    public virtual CancellationToken CreateCancellationToken()
+    {
+        return _cancelSource.Token;
     }
 
     /// <summary>
     /// Executes the given request and returns the <see cref="HttpRequestMessage"/>
     /// </summary>
     /// <param name="client">The <see cref="HttpClient"/> to use to make the request</param>
+    /// <param name="ensureAccept">Whether or not to ensure the `application/json` accept header is present</param>
+    /// <param name="token">The token to cancel the request</param>
     /// <returns>A task representing the results for the request</returns>
-    /// <exception cref="ArgumentNullException">Throws ArgumentNullException if the <see cref="_uri"/> isn't set correctly.</exception>
-    public Task<HttpResponseMessage> MakeRequest(HttpClient client)
+    public virtual async Task<HttpResponseMessage> MakeRequest(HttpClient client, bool ensureAccept, CancellationToken token)
     {
-        if (string.IsNullOrEmpty(_uri))
-            throw new ArgumentNullException(nameof(_uri));
+        using var request = new HttpRequestMessage();
 
-        var method = new HttpMethod(_method);
-        var request = new HttpRequestMessage(method, _uri);
-        request.Headers.Add("Accept", _accept);
-
-        foreach (var config in _config)
+        foreach (var config in _messageEdits)
             config?.Invoke(request);
 
-        return client.SendAsync(request);
+        if (ensureAccept && request.Headers.Accept.Count == 0)
+            request.Headers.Accept.ParseAdd("application/json");
+
+        return await client.SendAsync(request, token);
     }
 
     /// <summary>
@@ -392,13 +320,14 @@ public class HttpBuilder : IHttpBuilder
     /// </summary>
     /// <typeparam name="T">The type to deserialize too</typeparam>
     /// <param name="resp">The response message to deserialize</param>
+    /// <param name="token">The token to cancel the request</param>
     /// <returns>A task representing the returned deserialized result</returns>
-    public async Task<T?> Json<T>(HttpResponseMessage resp)
+    public virtual async Task<T?> Json<T>(HttpResponseMessage resp, CancellationToken token)
     {
         if (!_failWithNull) resp.EnsureSuccessStatusCode();
 
         using var rs = await resp.Content.ReadAsStreamAsync();
-        return await _json.Deserialize<T>(rs);
+        return await _json.Deserialize<T>(rs, token);
     }
 
     /// <summary>
@@ -407,18 +336,37 @@ public class HttpBuilder : IHttpBuilder
     /// <typeparam name="TSuccess">The type to use if the result was successful</typeparam>
     /// <typeparam name="TFailure">The type to use if the result was failure</typeparam>
     /// <param name="resp">The response message to deserialize</param>
+    /// <param name="token">The token to cancel the request</param>
     /// <returns>A task representing the return deserialized result</returns>
-    public async Task<HttpStatusResult<TSuccess, TFailure>> Json<TSuccess, TFailure>(HttpResponseMessage resp)
+    public virtual async Task<HttpStatusResult<TSuccess, TFailure>> Json<TSuccess, TFailure>(HttpResponseMessage resp, CancellationToken token)
     {
         using var rs = await resp.Content.ReadAsStreamAsync();
 
         if (resp.IsSuccessStatusCode)
         {
-            var data = await _json.Deserialize<TSuccess>(rs);
+            var data = await _json.Deserialize<TSuccess>(rs, token);
             return HttpStatusResult<TSuccess, TFailure>.FromSuccess(data, resp.StatusCode);
         }
 
-        var error = await _json.Deserialize<TFailure>(rs);
+        var error = await _json.Deserialize<TFailure>(rs, token);
         return HttpStatusResult<TSuccess, TFailure>.FromFailure(error, resp.StatusCode);
     }
+
+    /// <summary>
+    /// Triggers the finished actions
+    /// </summary>
+    /// <param name="ex">The exception that occurred</param>
+    public virtual void TriggerFinished(Exception? ex)
+    {
+        OnFinished(ex);
+    }
+
+    /// <summary>
+    /// Triggers the started actions
+    /// </summary>
+    public virtual void TriggerStarted()
+    {
+        OnStarting();
+    }
+    #endregion
 }

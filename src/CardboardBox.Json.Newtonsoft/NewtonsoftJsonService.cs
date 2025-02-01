@@ -20,8 +20,9 @@ public class NewtonsoftJsonService : IJsonService
     /// </summary>
     /// <typeparam name="T">The type to deserialize to</typeparam>
     /// <param name="stream">The stream of JSON data</param>
+    /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the deserialized result</returns>
-    public Task<T?> Deserialize<T>(Stream stream)
+    public Task<T?> Deserialize<T>(Stream stream, CancellationToken token = default)
     {
         var ser = new JsonSerializer();
         using var sr = new StreamReader(stream);
@@ -44,8 +45,9 @@ public class NewtonsoftJsonService : IJsonService
     /// <typeparam name="T">The type of data to serialize</typeparam>
     /// <param name="data">The data to serialize</param>
     /// <param name="stream">The stream to write the serialized data to</param>
+    /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the completion of the serialization process</returns>
-    public async Task Serialize<T>(T data, Stream stream)
+    public async Task Serialize<T>(T data, Stream stream, CancellationToken token = default)
     {
         var ser = new JsonSerializer();
         using var sw = new StreamWriter(stream);

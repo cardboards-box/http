@@ -8,12 +8,12 @@ public interface IHttpBuilderConfig
     /// <summary>
     /// Triggered whenever a request finishes
     /// </summary>
-    event HttpFinishedDelegate OnFinished;
+    event HttpFinishedDelegate Finished;
 
     /// <summary>
     /// Triggers whenever a request is starting
     /// </summary>
-    event HttpStartingDelegate OnStarting;
+    event HttpStartingDelegate Starting;
 
     /// <summary>
     /// The json service to use for serialization
@@ -94,8 +94,6 @@ public interface IHttpBuilder : IHttpBuilderConfig
 /// </summary>
 /// <param name="_factory">The factory to use to build <see cref="HttpClient"/></param>
 /// <param name="_json">The service to use for JSON parsing</param>
-/// <param name="_cacheService">The caching service</param>
-/// <param name="_logger">The logger to use for the client</param>
 public class HttpBuilder(
     IHttpClientFactory _factory,
     IJsonService _json) : IHttpBuilder
@@ -120,12 +118,12 @@ public class HttpBuilder(
     /// <summary>
     /// Triggered whenever a request finishes
     /// </summary>
-    public virtual event HttpFinishedDelegate OnFinished = delegate { };
+    public virtual event HttpFinishedDelegate Finished = delegate { };
 
     /// <summary>
     /// Triggers whenever a request is starting
     /// </summary>
-    public virtual event HttpStartingDelegate OnStarting = delegate { };
+    public virtual event HttpStartingDelegate Starting = delegate { };
 
     #region Configuration Methods
     /// <summary>
@@ -324,7 +322,11 @@ public class HttpBuilder(
     /// <returns>A task representing the returned deserialized result</returns>
     public virtual async Task<T?> Json<T>(HttpResponseMessage resp, CancellationToken token)
     {
-        if (!_failWithNull) resp.EnsureSuccessStatusCode();
+        if (!_failWithNull && !resp.IsSuccessStatusCode)
+        {
+            var content = await resp.Content.ReadAsStringAsync();
+            throw new HttpInvalidCodeException((int)resp.StatusCode, resp.ReasonPhrase, content);
+        }
 
         using var rs = await resp.Content.ReadAsStreamAsync();
         return await _json.Deserialize<T>(rs, token);
@@ -358,7 +360,7 @@ public class HttpBuilder(
     /// <param name="ex">The exception that occurred</param>
     public virtual void TriggerFinished(Exception? ex)
     {
-        OnFinished(ex);
+        Finished(ex);
     }
 
     /// <summary>
@@ -366,7 +368,7 @@ public class HttpBuilder(
     /// </summary>
     public virtual void TriggerStarted()
     {
-        OnStarting();
+        Starting();
     }
     #endregion
 }

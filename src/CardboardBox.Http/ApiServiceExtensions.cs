@@ -29,6 +29,19 @@ public static class ApiServiceExtensions
     /// <summary>
     /// Creates a GET request for the given URL
     /// </summary>
+    /// <param name="api">The API service to use</param>
+    /// <param name="url">The URL of the request</param>
+    /// <param name="config">Any optional configuration necessary</param>
+    /// <param name="token">The cancellation token for the request</param>
+    /// <returns>A Task representing the results of the request</returns>
+    public static Task<HttpResponseMessage?> Get(this IApiService api, string url, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    {
+        return api.Create(url, VERB_GET, config, token).Result();
+    }
+
+    /// <summary>
+    /// Creates a GET request for the given URL
+    /// </summary>
     /// <typeparam name="T">The return type</typeparam>
     /// <param name="api">The API service to use</param>
     /// <param name="url">The URL of the request</param>
@@ -266,7 +279,7 @@ public static class ApiServiceExtensions
     /// <returns>A Task representing the results of the request</returns>
     public static Task<T?> Delete<T>(this IApiService api, string url, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_DELETE, config, token)).Result<T>();
+        return api.Create(url, VERB_DELETE, config, token).Result<T>();
     }
 
     /// <summary>

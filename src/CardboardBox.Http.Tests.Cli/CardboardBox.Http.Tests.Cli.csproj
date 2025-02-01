@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CardboardBox.Setup" Version="2.0.0" />
+    <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CardboardBox.Http.Handlers\CardboardBox.Http.Handlers.csproj" />
+    <ProjectReference Include="..\CardboardBox.Http.Tests.Shared\CardboardBox.Http.Tests.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

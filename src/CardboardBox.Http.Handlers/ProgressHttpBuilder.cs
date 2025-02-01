@@ -41,13 +41,6 @@ public interface IHttpProgressBuilderConfig
     /// <param name="increment">The increment to report</param>
     /// <returns>The current <see cref="IHttpProgressBuilderConfig"/> instance for method chaining</returns>
     IHttpProgressBuilderConfig ReportIncrement(TimeSpan increment);
-
-    /// <summary>
-    /// Goes back to the original configuration builder
-    /// </summary>
-    /// <returns>The configuration builder this progress tracker is attached to</returns>
-    /// <remarks>Make sure this is called</remarks>
-    IHttpBuilderConfig Finish();
 }
 
 /// <summary>
@@ -118,10 +111,10 @@ public class ProgressHttpBuilder(
     /// </summary>
     /// <returns>The configuration builder this progress tracker is attached to</returns>
     /// <remarks>Make sure this is called</remarks>
-    public IHttpBuilderConfig Finish()
+    internal IHttpProgressBuilderConfig Register()
     {
-        _builder.OnStarting += BuilderOnStarting;
-        return _builder;
+        _builder.Starting += BuilderOnStarting;
+        return this;
     }
 
     internal HttpClientHandler GetHandler()
@@ -182,7 +175,7 @@ public class ProgressHttpBuilder(
 
     internal void BuilderOnStarting()
     {
-        _builder.OnFinished += BuilderOnFinished;
+        _builder.Finished += BuilderOnFinished;
 
         var httpHandler = GetHandler();
         var handler = new ProgressMessageHandler(httpHandler);
@@ -229,6 +222,6 @@ public class ProgressHttpBuilder(
         }
         _cancelSource = null;
         _disposers.Clear();
-        _builder.OnFinished -= BuilderOnFinished;
+        _builder.Finished -= BuilderOnFinished;
     }
 }

@@ -215,4 +215,28 @@ public static class HttpBuilderExtensions
     {
         return builder.Timeout(TimeSpan.FromSeconds(seconds));
     }
+
+    /// <summary>
+    /// Adds a delegate for tracking when requests are finished
+    /// </summary>
+    /// <param name="builder">The builder to attach to</param>
+    /// <param name="finished">The delegate to attach</param>
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    public static IHttpBuilderConfig OnFinished(this IHttpBuilderConfig builder, HttpFinishedDelegate finished)
+    {
+        builder.Finished += finished;
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds a delegate for tracking when requests are starting
+    /// </summary>
+    /// <param name="builder">The builder to attach to</param>
+    /// <param name="starting">The delegate to attach</param>
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    public static IHttpBuilderConfig OnStarting(this IHttpBuilderConfig builder, HttpStartingDelegate starting)
+    {
+        builder.Starting += starting;
+        return builder;
+    }
 }

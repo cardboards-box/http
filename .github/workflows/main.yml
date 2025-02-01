@@ -6,7 +6,7 @@ name: CI
 # events but only for the main branch
 on:
   push:
-    branches: [ main ]
+    branches: [ release/* ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -24,13 +24,21 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '7.x'
+          dotnet-version: '8.x'
 
       - name: Publish Json Nuget Package
         id: publish_nuget_json
         uses: alirezanet/publish-nuget@v3.0.4
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Json/CardboardBox.Json.csproj
+          TAG_COMMIT: true
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+
+      - name: Publish Newtonsoft Json Nuget Package
+        id: publish_nuget_json_newtonsoft
+        uses: alirezanet/publish-nuget@v3.0.4
+        with:
+          PROJECT_FILE_PATH: src/CardboardBox.Json.Newtonsoft/CardboardBox.Json.Newtonsoft.csproj
           TAG_COMMIT: true
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
           
@@ -55,5 +63,13 @@ jobs:
         uses: alirezanet/publish-nuget@v3.0.4
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Http.Html/CardboardBox.Http.Html.csproj
+          TAG_COMMIT: true
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+          
+      - name: Publish Http Handlers Nuget Package
+        id: publish_nuget_http_handlers
+        uses: alirezanet/publish-nuget@v3.0.4
+        with:
+          PROJECT_FILE_PATH: src/CardboardBox.Http.Handlers/CardboardBox.Http.Handlers.csproj
           TAG_COMMIT: true
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}

@@ -26,13 +26,10 @@ public static class HttpExtensions
         string userAgent = USER_AGENT,
         bool ensureResponse = true)
     {
-        return api.Create(url)
+        return ((IHttpBuilder)api.Create(url, "GET", null, null)
             .Accept("text/html")
-            .With(c =>
-            {
-                c.Headers.Add("user-agent", userAgent);
-                config?.Invoke(c);
-            })
+            .UserAgent(userAgent)
+            .Message(config))
             .HtmlResult(ensureResponse);
     }
 

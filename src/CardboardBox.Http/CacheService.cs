@@ -13,8 +13,9 @@ public interface ICacheService
     /// </summary>
     /// <typeparam name="T">The type of item to fetch</typeparam>
     /// <param name="filename">The name of the cached item</param>
+    /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the loaded data</returns>
-    Task<T?> Load<T>(string filename);
+    Task<T?> Load<T>(string filename, CancellationToken token = default);
 
     /// <summary>
     /// Saves the data to the cache
@@ -39,29 +40,20 @@ public interface ICacheService
 /// <summary>
 /// Represents a file-system based <see cref="ICacheService"/>
 /// </summary>
-public class DiskCacheService : ICacheService
+/// <param name="_json">The service for parsing json</param>
+public class DiskCacheService(IJsonService _json) : ICacheService
 {
-    private readonly IJsonService _json;
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="json"></param>
-    public DiskCacheService(IJsonService json)
-    {
-        _json = json;
-    }
-
     /// <summary>
     /// Fetches the data from the cache
     /// </summary>
     /// <typeparam name="T">The type of item to fetch</typeparam>
     /// <param name="filename">The name of the cached item</param>
+    /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the loaded data</returns>
-    public async Task<T?> Load<T>(string filename)
+    public async Task<T?> Load<T>(string filename, CancellationToken token = default)
     {
         using var stream = File.OpenRead(filename);
-        return await _json.Deserialize<T>(stream);
+        return await _json.Deserialize<T>(stream, token);
     }
 
     /// <summary>

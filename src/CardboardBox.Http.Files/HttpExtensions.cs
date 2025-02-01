@@ -24,13 +24,13 @@ public static class HttpExtensions
         Action<HttpRequestMessage>? config = null, 
         string userAgent = USER_AGENT)
     {
-        var req = await api.Create(url)
+        var req = await ((IHttpBuilder)api.Create(url, "GET", null, null)
             .Accept("*/*")
-            .With(c =>
+            .Message(c =>
             {
                 c.Headers.Add("user-agent", userAgent);
                 config?.Invoke(c);
-            })
+            }))
             .Result() ?? throw new NullReferenceException($"Request returned null for: {url}");
         req.EnsureSuccessStatusCode();
 

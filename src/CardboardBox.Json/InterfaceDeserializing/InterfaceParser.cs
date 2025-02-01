@@ -18,7 +18,9 @@ public class InterfaceParser<T> : JsonConverter<T>
         {
             if (ignore == JsonIgnoreCondition.Always) continue;
 
-            var node = parent[json];
+            var name = options.PropertyNamingPolicy?.ConvertName(json) ?? json;
+
+            var node = parent[name];
             if (node == null) continue;
 
             var value = node.Deserialize(prop.PropertyType, options);

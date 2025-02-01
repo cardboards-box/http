@@ -28,6 +28,11 @@ public class HttpStatusResult<TSuccess, TFailure>
     public TFailure? ErrorResult { get; set; }
 
     /// <summary>
+    /// The exception the request finished with
+    /// </summary>
+    public Exception? Exception { get; set; }
+
+    /// <summary>
     /// Creates the result from the given successful data
     /// </summary>
     /// <param name="result">The successful data</param>
@@ -56,6 +61,22 @@ public class HttpStatusResult<TSuccess, TFailure>
             Code = code,
             Success = false,
             ErrorResult = result
+        };
+    }
+
+    /// <summary>
+    /// Creates the result from the given exception
+    /// </summary>
+    /// <param name="exception">The exception that occurred</param>
+    /// <param name="code">The status code the request finished with</param>
+    /// <returns>The resulting failed data</returns>
+    public static HttpStatusResult<TSuccess, TFailure> FromFailure(Exception exception, HttpStatusCode code = HttpStatusCode.InternalServerError)
+    {
+        return new HttpStatusResult<TSuccess, TFailure>
+        {
+            Code = code,
+            Success = false,
+            Exception = exception
         };
     }
 }

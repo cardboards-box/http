@@ -2,6 +2,8 @@
 
 namespace CardboardBox.Http;
 
+using Delegates;
+
 /// <summary>
 /// A set of extensions for configuring <see cref="IHttpBuilder"/>s
 /// </summary>
@@ -237,6 +239,36 @@ public static class HttpBuilderExtensions
     public static IHttpBuilderConfig OnStarting(this IHttpBuilderConfig builder, HttpStartingDelegate starting)
     {
         builder.Starting += starting;
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds a delegate for tracking when responses are received
+    /// </summary>
+    /// <param name="builder">The builder to attach to</param>
+    /// <param name="responseReceived">The delegate to attach</param>
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    /// <remarks>
+    /// You should avoid processing the body of the response in reaction to this delegate, 
+    /// otherwise you can mess with the way the library processes the response streams and 
+    /// cause issues with the deserialization of the response.
+    /// </remarks>
+    public static IHttpBuilderConfig OnResponseReceived(this IHttpBuilderConfig builder, HttpResponseReceivedDelegate responseReceived)
+    {
+        builder.ResponseReceived += responseReceived;
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds a delegate for tracking when a response is parsed
+    /// </summary>
+    /// <param name="builder">The builder to attach to</param>
+    /// <param name="responseParsed">The delegate to attach</param>
+    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    /// <remarks>This only works for built in JSON responses</remarks>
+    public static IHttpBuilderConfig OnResponseParsed(this IHttpBuilderConfig builder, HttpResponseParsedDelegate responseParsed)
+    {
+        builder.ResponseParsed += responseParsed;
         return builder;
     }
 }

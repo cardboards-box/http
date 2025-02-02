@@ -1,5 +1,7 @@
 ﻿namespace CardboardBox.Http;
 
+using Delegates;
+
 /// <summary>
 /// Providers a builder used for configuration HTTP requests from the given <see cref="IHttpClientFactory"/>
 /// </summary>
@@ -14,6 +16,22 @@ public interface IHttpBuilderConfig
     /// Triggers whenever a request is starting
     /// </summary>
     event HttpStartingDelegate Starting;
+
+    /// <summary>
+    /// Triggers whenever a response is received 
+    /// </summary>
+    /// <remarks>
+    /// You should avoid processing the body of the response in reaction to this delegate, 
+    /// otherwise you can mess with the way the library processes the response streams and 
+    /// cause issues with the deserialization of the response.
+    /// </remarks>
+    event HttpResponseReceivedDelegate ResponseReceived;
+
+    /// <summary>
+    /// Triggers when a response is parsed from a request
+    /// </summary>
+    /// <remarks>This only works for built in JSON responses</remarks>
+    event HttpResponseParsedDelegate ResponseParsed;
 
     /// <summary>
     /// The json service to use for serialization
@@ -124,6 +142,22 @@ public class HttpBuilder(
     /// Triggers whenever a request is starting
     /// </summary>
     public virtual event HttpStartingDelegate Starting = delegate { };
+
+    /// <summary>
+    /// Triggers whenever a response is received 
+    /// </summary>
+    /// <remarks>
+    /// You should avoid processing the body of the response in reaction to this delegate, 
+    /// otherwise you can mess with the way the library processes the response streams and 
+    /// cause issues with the deserialization of the response.
+    /// </remarks>
+    public virtual event HttpResponseReceivedDelegate ResponseReceived = delegate { };
+
+    /// <summary>
+    /// Triggers when a response is parsed from a request
+    /// </summary>
+    /// <remarks>This only works for built in JSON responses</remarks>
+    public virtual event HttpResponseParsedDelegate ResponseParsed = delegate { };
 
     #region Configuration Methods
     /// <summary>
@@ -310,7 +344,9 @@ public class HttpBuilder(
         if (ensureAccept && request.Headers.Accept.Count == 0)
             request.Headers.Accept.ParseAdd("application/json");
 
-        return await client.SendAsync(request, token);
+        var response = await client.SendAsync(request, token);
+        TriggerResponseReceived(response, request);
+        return response;
     }
 
     /// <summary>
@@ -325,11 +361,14 @@ public class HttpBuilder(
         if (!_failWithNull && !resp.IsSuccessStatusCode)
         {
             var content = await resp.Content.ReadAsStringAsync();
+            TriggerResponseParsed(resp, content);
             throw new HttpInvalidCodeException((int)resp.StatusCode, resp.ReasonPhrase, content);
         }
 
         using var rs = await resp.Content.ReadAsStreamAsync();
-        return await _json.Deserialize<T>(rs, token);
+        var result = await _json.Deserialize<T>(rs, token);
+        TriggerResponseParsed(resp, result);
+        return result;
     }
 
     /// <summary>
@@ -347,10 +386,12 @@ public class HttpBuilder(
         if (resp.IsSuccessStatusCode)
         {
             var data = await _json.Deserialize<TSuccess>(rs, token);
+            TriggerResponseParsed(resp, data);
             return HttpStatusResult<TSuccess, TFailure>.FromSuccess(data, resp.StatusCode);
         }
 
         var error = await _json.Deserialize<TFailure>(rs, token);
+        TriggerResponseParsed(resp, error);
         return HttpStatusResult<TSuccess, TFailure>.FromFailure(error, resp.StatusCode);
     }
 
@@ -369,6 +410,26 @@ public class HttpBuilder(
     public virtual void TriggerStarted()
     {
         Starting();
+    }
+
+    /// <summary>
+    /// Triggers the response received actions
+    /// </summary>
+    /// <param name="response">The response that was received</param>
+    /// <param name="request">The request that was sent</param>
+    public virtual void TriggerResponseReceived(HttpResponseMessage response, HttpRequestMessage request)
+    {
+        ResponseReceived(response, request);
+    }
+
+    /// <summary>
+    /// Triggers the response parsed actions
+    /// </summary>
+    /// <param name="response">The response that was received</param>
+    /// <param name="parsed">The object that was parsed</param>
+    public virtual void TriggerResponseParsed(HttpResponseMessage response, object? parsed)
+    {
+        ResponseParsed(response, parsed);
     }
     #endregion
 }

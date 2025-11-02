@@ -13,7 +13,7 @@
 		<RepositoryUrl>https://github.com/cardboards-box/http</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>Http;HttpClientFactory;CardboardBox;Cardboard</PackageTags>
-		<Version>3.0.1</Version>
+		<Version>3.0.2</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -22,8 +22,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Flurl" Version="4.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.10" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.10" />
 	</ItemGroup>
 	
 	<ItemGroup>

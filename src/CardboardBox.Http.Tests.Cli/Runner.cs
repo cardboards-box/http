@@ -70,8 +70,8 @@ internal class Runner(
             .OnStarting(() => _logger.LogInformation("Post file is starting"))
             .OnFinished(t => _logger.LogInformation("Post file is finished: {error}", t?.ToString() ?? "No error!"))
             .ProgressTracking(t => t
-                .OnDownload((percent, bytes, elapsed) => _logger.LogDebug("Download Progress - Immediate - {percent}% ({bytes}) - {elapsed}", percent, bytes, elapsed))
-                .OnUpload((percent, bytes, elapsed) => _logger.LogDebug("Upload Progress - Immediate - {percent}% ({bytes}) - {elapsed}", percent, bytes, elapsed))
+                //.OnDownload((percent, bytes, elapsed) => _logger.LogDebug("Download Progress - Immediate - {percent}% ({bytes}) - {elapsed}", percent, bytes, elapsed))
+                //.OnUpload((percent, bytes, elapsed) => _logger.LogDebug("Upload Progress - Immediate - {percent}% ({bytes}) - {elapsed}", percent, bytes, elapsed))
                 .OnDownloadTimer((percent, bytes, elapsed) => _logger.LogInformation("Download Progress - {percent}% ({bytes}) - {elapsed}", percent, bytes, elapsed))
                 .OnUploadTimer((percent, bytes, elapsed) => _logger.LogInformation("Upload Progress - {percent}% ({bytes}) - {elapsed}", percent, bytes, elapsed))));
 
@@ -93,7 +93,7 @@ internal class Runner(
             .OnStarting(() => _logger.LogInformation("Download file is starting"))
             .OnFinished(t => _logger.LogInformation("Download file is finished: {error}", t?.ToString() ?? "No error!"))
             .ProgressTracking(t => t
-                .OnDownload((percent, bytes, elapsed) => _logger.LogDebug("Download Progress - Immediate - {percent}% ({bytes}) - {elapsed}", percent, bytes, elapsed))
+                //.OnDownload((percent, bytes, elapsed) => _logger.LogDebug("Download Progress - Immediate - {percent}% ({bytes}) - {elapsed}", percent, bytes, elapsed))
                 .OnDownloadTimer((percent, bytes, elapsed) => _logger.LogInformation("Download Progress - {percent}% ({bytes}) - {elapsed}", percent, bytes, elapsed))));
         if (response is null)
         {

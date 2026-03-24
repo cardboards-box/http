@@ -34,7 +34,7 @@ public interface ICacheService
     /// <param name="cacheDir">The cache directory to use</param>
     /// <param name="cacheMin">The time to live for the cache</param>
     /// <returns>Whether or not the cached item is valid.</returns>
-    bool Validate(string uri, out string? filename, string cacheDir = "Cache", double cacheMin = 5);
+    bool Validate(string uri, out string? filename, string cacheDir = ApiServiceExtensions.DEFAULT_CACHE_DIR, double cacheMin = 5);
 }
 
 /// <summary>
@@ -77,7 +77,7 @@ public class DiskCacheService(IJsonService _json) : ICacheService
     /// <param name="cacheDir">The cache directory to use</param>
     /// <param name="cacheMin">The time to live for the cache</param>
     /// <returns>Whether or not the cached item is valid.</returns>
-    public bool Validate(string uri, out string? filename, string cacheDir = "Cache", double cacheMin = 5)
+    public bool Validate(string uri, out string? filename, string cacheDir = ApiServiceExtensions.DEFAULT_CACHE_DIR, double cacheMin = 5)
     {
         filename = null;
         if (string.IsNullOrEmpty(uri))

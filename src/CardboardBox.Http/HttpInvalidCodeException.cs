@@ -7,7 +7,7 @@
 /// <param name="code">The status code of the response</param>
 /// <param name="status">The status message of the response</param>
 public class HttpInvalidCodeException(
-    int code, string status, string body) : Exception($"HTTP Status Code Invalid: {code} - {status}")
+    int code, string? status, string body) : Exception($"HTTP Status Code Invalid: {code} - {status ?? "No Status"}")
 {
     /// <summary>
     /// The status code of the response
@@ -17,7 +17,7 @@ public class HttpInvalidCodeException(
     /// <summary>
     /// The status message of the response
     /// </summary>
-    public string Status => status;
+    public string? Status => status;
 
     /// <summary>
     /// The body of the response

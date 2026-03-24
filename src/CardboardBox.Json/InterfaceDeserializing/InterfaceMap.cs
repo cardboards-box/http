@@ -53,7 +53,7 @@ public class InterfaceMap<T>
     /// <summary>
     /// All of the types that implement this type
     /// </summary>
-    public TypeMap[] Map => _map ??= GetMap().ToArray();
+    public TypeMap[] Map => _map ??= [..GetMap()];
 
     private IEnumerable<InterfaceProp> GetProps()
     {

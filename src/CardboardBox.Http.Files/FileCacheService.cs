@@ -21,25 +21,14 @@ public interface IFileCacheService
 /// <summary>
 /// Implementation of the <see cref="IFileCacheService"/>
 /// </summary>
-public class FileCacheService : IFileCacheService
+public class FileCacheService(
+	IApiService _api,
+	IJsonService _json) : IFileCacheService
 {
     /// <summary>
     /// The default cache directory
     /// </summary>
-    public const string FILE_CACHE_DIR = "Cache";
-    private readonly IApiService _api;
-    private readonly IJsonService _json;
-
-    /// <summary></summary>
-    /// <param name="api"></param>
-    /// <param name="json"></param>
-    public FileCacheService(
-        IApiService api,
-        IJsonService json)
-    {
-        _api = api;
-        _json = json;
-    }
+    public const string FILE_CACHE_DIR = ApiServiceExtensions.DEFAULT_CACHE_DIR;
 
     /// <summary>
     /// Gets the file either from the cache or from the given URL

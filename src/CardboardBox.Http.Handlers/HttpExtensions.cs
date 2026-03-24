@@ -8,10 +8,10 @@ public static class HttpExtensions
     /// <summary>
     /// Add progress tracking to the HTTP builder
     /// </summary>
-    /// <param name="builder">The <see cref="IHttpBuilderConfig"/> to attach to</param>
+    /// <param name="builder">The <see cref="IHttpBuilder"/> to attach to</param>
     /// <param name="config">The configuration action</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig ProgressTracking(this IHttpBuilderConfig builder, Action<IHttpProgressBuilderConfig> config)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder ProgressTracking(this IHttpBuilder builder, Action<IHttpProgressBuilderConfig> config)
     {
         var bob = new ProgressHttpBuilder(builder);
         config(bob);

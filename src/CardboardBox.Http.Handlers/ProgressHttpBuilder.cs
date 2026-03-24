@@ -4,7 +4,7 @@ using System.Net.Http.Handlers;
 namespace CardboardBox.Http.Handlers;
 
 /// <summary>
-/// Providers a set of configuration extensions for adding progress tracking to <see cref="IHttpBuilderConfig"/>
+/// Providers a set of configuration extensions for adding progress tracking to <see cref="IHttpBuilder"/>
 /// </summary>
 public interface IHttpProgressBuilderConfig
 {
@@ -46,9 +46,9 @@ public interface IHttpProgressBuilderConfig
 /// <summary>
 /// The implementation of <see cref="IHttpProgressBuilderConfig"/>
 /// </summary>
-/// <param name="_builder">The original <see cref="IHttpBuilderConfig"/></param>
+/// <param name="_builder">The original <see cref="IHttpBuilder"/></param>
 public class ProgressHttpBuilder(
-    IHttpBuilderConfig _builder) : IHttpProgressBuilderConfig
+    IHttpBuilder _builder) : IHttpProgressBuilderConfig
 {
     private readonly List<IDisposable> _disposers = [];
 

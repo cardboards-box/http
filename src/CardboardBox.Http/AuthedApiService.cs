@@ -4,38 +4,26 @@
 /// Represents an <see cref="IApiService"/> with Authorization Tokens added to every request
 /// </summary>
 /// <typeparam name="T">The <see cref="IAuthSettings"/> object to use for this API request</typeparam>
-public class AuthedApiService<T> : ApiService where T : IAuthSettings
+public class AuthedApiService<T>(
+	IHttpClientFactory http,
+	IJsonService json,
+	T _settings) : ApiService(http, json) where T : IAuthSettings
 {
-    private readonly T _settings;
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="http"></param>
-    /// <param name="json"></param>
-    /// <param name="settings"></param>
-    public AuthedApiService(
-        IHttpClientFactory http,
-        IJsonService json,
-        T settings) : base(http, json)
-    {
-        _settings = settings;
-    }
-
-    /// <summary>
-    /// Creates an <see cref="IHttpBuilder"/> for the given URL and method
-    /// </summary>
-    /// <param name="url">The url to request data from</param>
-    /// <param name="json">The JSON provider to use for this request</param>
-    /// <param name="method">The method used for this HTTP request</param>
-    /// <returns>An instance of the <see cref="IHttpBuilder"/></returns>
-    public override IHttpBuilder Create(string url, IJsonService json, string method = "GET")
+	/// <summary>
+	/// Creates an <see cref="IHttpBuilder"/> for the given URL and method
+	/// </summary>
+	/// <param name="url">The url to request data from</param>
+	/// <param name="json">The JSON provider to use for this request</param>
+	/// <param name="method">The method used for this HTTP request</param>
+	/// <param name="token">The cancellation token for the request</param>
+	/// <returns>An instance of the <see cref="IHttpBuilder"/></returns>
+	public override IHttpBuilder Create(string url, IJsonService? json = null, string? method = null, CancellationToken? token = null)
     {
         var scheme = _settings.Scheme;
         if (string.IsNullOrEmpty(scheme))
-            scheme = "Bearer";
+            scheme = ApiServiceExtensions.BEARER_SCHEME;
 
-        return (IHttpBuilder)base.Create(url, json, method).Authorization(_settings.Token, scheme);
+        return base.Create(url, json, method, token).Authorization(_settings.Token, scheme);
     }
 }
 
@@ -70,11 +58,13 @@ public abstract class ConfigAuthSettings : IAuthSettings
     /// <summary>
     /// The authorization token to use
     /// </summary>
-    public virtual string Token => _config[Section + ":Token"] ?? throw new ArgumentNullException(Section + ":Token");
+    public virtual string Token => _config[Section + ":" + ApiServiceExtensions.KEY_TOKEN] 
+        ?? throw new ArgumentNullException(Section + ":" + ApiServiceExtensions.KEY_TOKEN);
     /// <summary>
     /// The authorization scheme to use (defaults to "Bearer")
     /// </summary>
-    public virtual string Scheme => _config[Section + ":Scheme"] ?? "Bearer";
+    public virtual string Scheme => _config[Section + ":" + ApiServiceExtensions.KEY_SCHEME] 
+        ?? ApiServiceExtensions.BEARER_SCHEME;
 
     /// <summary>
     /// 

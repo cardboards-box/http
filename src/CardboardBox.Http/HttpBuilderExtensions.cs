@@ -14,8 +14,8 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to configure</param>
     /// <param name="accept">The accept header's value</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig Accept(this IHttpBuilderConfig builder, string accept)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder Accept(this IHttpBuilder builder, string accept)
     {
         return builder.Message(c => c.Headers.Add("Accept", accept));
     }
@@ -27,7 +27,7 @@ public static class HttpBuilderExtensions
     /// <param name="token">The token to use</param>
     /// <param name="scheme">The scheme to use (defaults to "Bearer")</param>
     /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public static IHttpBuilderConfig Authorization(this IHttpBuilderConfig builder, string token, string scheme = "Bearer")
+    public static IHttpBuilder Authorization(this IHttpBuilder builder, string token, string scheme = ApiServiceExtensions.BEARER_SCHEME)
     {
         return builder.Message(c => c.Headers.Add("Authorization", $"{scheme} {token}"));
     }
@@ -38,7 +38,7 @@ public static class HttpBuilderExtensions
     /// <param name="builder">The builder to configure</param>
     /// <param name="content">The body content</param>
     /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public static IHttpBuilderConfig BodyContent(this IHttpBuilderConfig builder, HttpContent content)
+    public static IHttpBuilder BodyContent(this IHttpBuilder builder, HttpContent content)
     {
         return builder.Message(c => c.Content = content);
     }
@@ -49,7 +49,7 @@ public static class HttpBuilderExtensions
     /// <param name="builder">The builder to configure</param>
     /// <param name="data">The parameters to be encoded</param>
     /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public static IHttpBuilderConfig Body(this IHttpBuilderConfig builder, params (string, string)[] data)
+    public static IHttpBuilder Body(this IHttpBuilder builder, params (string, string)[] data)
     {
         var kvp = data.Select(t => new KeyValuePair<string, string>(t.Item1, t.Item2));
         var content = new FormUrlEncodedContent(kvp);
@@ -63,10 +63,10 @@ public static class HttpBuilderExtensions
     /// <param name="builder">The builder to configure</param>
     /// <param name="data">The data to serialize</param>
     /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
-    public static IHttpBuilderConfig Body<T>(this IHttpBuilderConfig builder, T data)
+    public static IHttpBuilder Body<T>(this IHttpBuilder builder, T data)
     {
         var str = builder.JsonService.Serialize(data);
-        var json = new StringContent(str, Encoding.UTF8, "application/json");
+        var json = new StringContent(str, Encoding.UTF8, ApiServiceExtensions.MEDIA_TYPE_JSON);
         return builder.BodyContent(json);
     }
 
@@ -74,8 +74,8 @@ public static class HttpBuilderExtensions
     /// Instead of throwing an exception, it will log the error and return a default value
     /// </summary>
     /// <param name="builder">The builder to configure</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig FailGracefully(this IHttpBuilderConfig builder)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder FailGracefully(this IHttpBuilder builder)
     {
         return builder.ThrowOnNull(false);
     }
@@ -84,19 +84,19 @@ public static class HttpBuilderExtensions
     /// Throw an exception if the returned status code isn't in the 200 range.
     /// </summary>
     /// <param name="builder">The builder to configure</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig FailWithThrow(this IHttpBuilderConfig builder)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder FailWithThrow(this IHttpBuilder builder)
     {
         return builder.ThrowOnNull(true);
     }
 
     /// <summary>
-    /// Provides a catch-all configuration object for the <see cref="IHttpBuilderConfig"/> for anything not handled by default
+    /// Provides a catch-all configuration object for the <see cref="IHttpBuilder"/> for anything not handled by default
     /// </summary>
     /// <param name="builder">The builder to configure</param>
     /// <param name="config">The configuration value</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig With(this IHttpBuilderConfig builder, Action<IHttpBuilderConfig>? config)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder With(this IHttpBuilder builder, Action<IHttpBuilder>? config)
     {
         config?.Invoke(builder);
         return builder;
@@ -107,9 +107,9 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to configure</param>
     /// <param name="client">The instance of the <see cref="HttpClient"/></param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
     /// <remarks>The client will be disposed after first use</remarks>
-    public static IHttpBuilderConfig Client(this IHttpBuilderConfig builder, HttpClient client)
+    public static IHttpBuilder Client(this IHttpBuilder builder, HttpClient client)
     {
         return builder.ClientFactory(_ => client);
     }
@@ -119,8 +119,8 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to configure</param>
     /// <param name="method">The method to use</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig Method(this IHttpBuilderConfig builder, HttpMethod method)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder Method(this IHttpBuilder builder, HttpMethod method)
     {
         return builder.Message(c => c.Method = method);
     }
@@ -130,8 +130,8 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to configure</param>
     /// <param name="method">The method to use</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig Method(this IHttpBuilderConfig builder, string method)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder Method(this IHttpBuilder builder, string method)
     {
         return builder.Method(new HttpMethod(method.ToUpper().Trim()));
     }
@@ -141,8 +141,8 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to configure</param>
     /// <param name="uri">The URI to use</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig Uri(this IHttpBuilderConfig builder, Uri uri)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder Uri(this IHttpBuilder builder, Uri uri)
     {
         return builder.Message(c => c.RequestUri = uri);
     }
@@ -153,10 +153,10 @@ public static class HttpBuilderExtensions
     /// <param name="builder">The builder to configure</param>
     /// <param name="uri">The URI to use</param>
     /// <param name="parameters">Any query parameters to attach to the URI</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
     /// <exception cref="ArgumentNullException">Thrown when the <paramref name="uri"/> is null</exception>
     /// <exception cref="ArgumentException">Thrown when the <paramref name="uri"/> is not a valid URI</exception>
-    public static IHttpBuilderConfig Uri(this IHttpBuilderConfig builder, string uri, params (string, string)[] parameters)
+    public static IHttpBuilder Uri(this IHttpBuilder builder, string uri, params (string, string)[] parameters)
     {
         if (string.IsNullOrEmpty(uri))
             throw new ArgumentNullException(nameof(uri));
@@ -176,10 +176,10 @@ public static class HttpBuilderExtensions
     /// <param name="builder">The builder to configure</param>
     /// <param name="parts">The parts of the URI to build</param>
     /// <param name="parameters">Any query parameters to attach to the URI</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
     /// <exception cref="ArgumentNullException">Thrown when the built uri is null</exception>
     /// <exception cref="ArgumentException">Thrown when the built uri is not a valid URI</exception>
-    public static IHttpBuilderConfig Uri(this IHttpBuilderConfig builder, string[] parts, params (string, string)[] parameters)
+    public static IHttpBuilder Uri(this IHttpBuilder builder, string[] parts, params (string, string)[] parameters)
     {
         var uri = string.Join("/", parts.Select(t => t.Trim('/')));
         return builder.Uri(uri, parameters);
@@ -191,7 +191,7 @@ public static class HttpBuilderExtensions
     /// <param name="builder">The builder to configure</param>
     /// <param name="userAgent">The User-Agent to use</param>
     /// <returns></returns>
-    public static IHttpBuilderConfig UserAgent(this IHttpBuilderConfig builder, string userAgent)
+    public static IHttpBuilder UserAgent(this IHttpBuilder builder, string userAgent)
     {
         return builder.Message(c => c.Headers.Add("User-Agent", userAgent));
     }
@@ -201,8 +201,8 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to configure</param>
     /// <param name="timespan">How long to wait before timing out</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig Timeout(this IHttpBuilderConfig builder, TimeSpan timespan)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder Timeout(this IHttpBuilder builder, TimeSpan timespan)
     {
         return builder.ClientConfig(c => c.Timeout = timespan);
     }
@@ -212,8 +212,8 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to configure</param>
     /// <param name="seconds">How many seconds to wait before timing out</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig Timeout(this IHttpBuilderConfig builder, double seconds)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder Timeout(this IHttpBuilder builder, double seconds)
     {
         return builder.Timeout(TimeSpan.FromSeconds(seconds));
     }
@@ -223,8 +223,8 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to attach to</param>
     /// <param name="finished">The delegate to attach</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig OnFinished(this IHttpBuilderConfig builder, HttpFinishedDelegate finished)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder OnFinished(this IHttpBuilder builder, HttpFinishedDelegate finished)
     {
         builder.Finished += finished;
         return builder;
@@ -235,8 +235,8 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to attach to</param>
     /// <param name="starting">The delegate to attach</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
-    public static IHttpBuilderConfig OnStarting(this IHttpBuilderConfig builder, HttpStartingDelegate starting)
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
+    public static IHttpBuilder OnStarting(this IHttpBuilder builder, HttpStartingDelegate starting)
     {
         builder.Starting += starting;
         return builder;
@@ -247,13 +247,13 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to attach to</param>
     /// <param name="responseReceived">The delegate to attach</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
     /// <remarks>
     /// You should avoid processing the body of the response in reaction to this delegate, 
     /// otherwise you can mess with the way the library processes the response streams and 
     /// cause issues with the deserialization of the response.
     /// </remarks>
-    public static IHttpBuilderConfig OnResponseReceived(this IHttpBuilderConfig builder, HttpResponseReceivedDelegate responseReceived)
+    public static IHttpBuilder OnResponseReceived(this IHttpBuilder builder, HttpResponseReceivedDelegate responseReceived)
     {
         builder.ResponseReceived += responseReceived;
         return builder;
@@ -264,9 +264,9 @@ public static class HttpBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder to attach to</param>
     /// <param name="responseParsed">The delegate to attach</param>
-    /// <returns>The instance of <see cref="IHttpBuilderConfig"/> for chaining</returns>
+    /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
     /// <remarks>This only works for built in JSON responses</remarks>
-    public static IHttpBuilderConfig OnResponseParsed(this IHttpBuilderConfig builder, HttpResponseParsedDelegate responseParsed)
+    public static IHttpBuilder OnResponseParsed(this IHttpBuilder builder, HttpResponseParsedDelegate responseParsed)
     {
         builder.ResponseParsed += responseParsed;
         return builder;

@@ -25,16 +25,41 @@ public static class ApiServiceExtensions
     /// </summary>
     public const string VERB_PUT = "PUT";
 
-    #region GET Requests
+	/// <summary>
+	/// The default scheme to use for authorization headers
+	/// </summary>
+	public const string BEARER_SCHEME = "Bearer";
+
     /// <summary>
-    /// Creates a GET request for the given URL
+    /// The key to use for token settings
     /// </summary>
-    /// <param name="api">The API service to use</param>
-    /// <param name="url">The URL of the request</param>
-    /// <param name="config">Any optional configuration necessary</param>
-    /// <param name="token">The cancellation token for the request</param>
-    /// <returns>A Task representing the results of the request</returns>
-    public static Task<HttpResponseMessage?> Get(this IApiService api, string url, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public const string KEY_TOKEN = "Token";
+
+    /// <summary>
+    /// The key to use for schemes
+    /// </summary>
+    public const string KEY_SCHEME = "Scheme";
+
+    /// <summary>
+    /// The default directory for caching directories
+    /// </summary>
+    public const string DEFAULT_CACHE_DIR = "Cache";
+
+    /// <summary>
+    /// The media type of JSON content
+    /// </summary>
+    public const string MEDIA_TYPE_JSON = "application/json";
+
+	#region GET Requests
+	/// <summary>
+	/// Creates a GET request for the given URL
+	/// </summary>
+	/// <param name="api">The API service to use</param>
+	/// <param name="url">The URL of the request</param>
+	/// <param name="config">Any optional configuration necessary</param>
+	/// <param name="token">The cancellation token for the request</param>
+	/// <returns>A Task representing the results of the request</returns>
+	public static Task<HttpResponseMessage?> Get(this IApiService api, string url, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
         return api.Create(url, VERB_GET, config, token).Result();
     }
@@ -48,7 +73,7 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A Task representing the results of the request</returns>
-    public static Task<T?> Get<T>(this IApiService api, string url, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<T?> Get<T>(this IApiService api, string url, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
         return api.Create(url, VERB_GET, config, token).Result<T>();
     }
@@ -63,9 +88,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A Task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Get<TSuccess, TFailure>(this IApiService api, string url, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Get<TSuccess, TFailure>(this IApiService api, string url, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_GET, config, token).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_GET, config, token).FailGracefully().Result<TSuccess, TFailure>();
     }
     #endregion
 
@@ -81,9 +106,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<TResult?> Post<TResult, TData>(this IApiService api, string url, TData data, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<TResult?> Post<TResult, TData>(this IApiService api, string url, TData data, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_POST, config, token).Body(data)).Result<TResult>();
+        return api.Create(url, VERB_POST, config, token).Body(data).Result<TResult>();
     }
 
     /// <summary>
@@ -98,9 +123,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Post<TSuccess, TFailure, TData>(this IApiService api, string url, TData data, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Post<TSuccess, TFailure, TData>(this IApiService api, string url, TData data, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_POST, config, token).Body(data).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_POST, config, token).Body(data).FailGracefully().Result<TSuccess, TFailure>();
     }
 
     /// <summary>
@@ -114,9 +139,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<T?> Post<T>(this IApiService api, string url, (string key, string val)[] formData, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<T?> Post<T>(this IApiService api, string url, (string key, string val)[] formData, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_POST, config, token).Body(formData)).Result<T>();
+        return api.Create(url, VERB_POST, config, token).Body(formData).Result<T>();
     }
 
     /// <summary>
@@ -131,9 +156,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Post<TSuccess, TFailure>(this IApiService api, string url, (string key, string val)[] data, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Post<TSuccess, TFailure>(this IApiService api, string url, (string key, string val)[] data, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_POST, config, token).Body(data).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_POST, config, token).Body(data).FailGracefully().Result<TSuccess, TFailure>();
     }
 
     /// <summary>
@@ -146,9 +171,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<T?> Post<T>(this IApiService api, string url, HttpContent content, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<T?> Post<T>(this IApiService api, string url, HttpContent content, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_POST, config, token).BodyContent(content)).Result<T>();
+        return api.Create(url, VERB_POST, config, token).BodyContent(content).Result<T>();
     }
 
     /// <summary>
@@ -162,9 +187,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Post<TSuccess, TFailure>(this IApiService api, string url, HttpContent content, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Post<TSuccess, TFailure>(this IApiService api, string url, HttpContent content, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_POST, config, token).BodyContent(content).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_POST, config, token).BodyContent(content).FailGracefully().Result<TSuccess, TFailure>();
     }
     #endregion
 
@@ -180,9 +205,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<TResult?> Put<TResult, TData>(this IApiService api, string url, TData data, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<TResult?> Put<TResult, TData>(this IApiService api, string url, TData data, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_PUT, config, token).Body(data)).Result<TResult>();
+        return api.Create(url, VERB_PUT, config, token).Body(data).Result<TResult>();
     }
 
     /// <summary>
@@ -197,9 +222,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Put<TSuccess, TFailure, TData>(this IApiService api, string url, TData data, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Put<TSuccess, TFailure, TData>(this IApiService api, string url, TData data, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_PUT, config, token).Body(data).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_PUT, config, token).Body(data).FailGracefully().Result<TSuccess, TFailure>();
     }
 
     /// <summary>
@@ -213,9 +238,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<T?> Put<T>(this IApiService api, string url, (string key, string val)[] formData, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<T?> Put<T>(this IApiService api, string url, (string key, string val)[] formData, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_PUT, config, token).Body(formData)).Result<T>();
+        return api.Create(url, VERB_PUT, config, token).Body(formData).Result<T>();
     }
 
     /// <summary>
@@ -230,9 +255,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Put<TSuccess, TFailure>(this IApiService api, string url, (string key, string val)[] data, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Put<TSuccess, TFailure>(this IApiService api, string url, (string key, string val)[] data, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_PUT, config, token).Body(data).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_PUT, config, token).Body(data).FailGracefully().Result<TSuccess, TFailure>();
     }
 
     /// <summary>
@@ -245,9 +270,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<T?> Put<T>(this IApiService api, string url, HttpContent content, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<T?> Put<T>(this IApiService api, string url, HttpContent content, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_PUT, config, token).BodyContent(content)).Result<T>();
+        return api.Create(url, VERB_PUT, config, token).BodyContent(content).Result<T>();
     }
 
     /// <summary>
@@ -261,9 +286,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Put<TSuccess, TFailure>(this IApiService api, string url, HttpContent content, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Put<TSuccess, TFailure>(this IApiService api, string url, HttpContent content, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_PUT, config, token).BodyContent(content).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_PUT, config, token).BodyContent(content).FailGracefully().Result<TSuccess, TFailure>();
     }
     #endregion
 
@@ -277,7 +302,7 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A Task representing the results of the request</returns>
-    public static Task<T?> Delete<T>(this IApiService api, string url, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<T?> Delete<T>(this IApiService api, string url, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
         return api.Create(url, VERB_DELETE, config, token).Result<T>();
     }
@@ -292,9 +317,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A Task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Delete<TSuccess, TFailure>(this IApiService api, string url, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Delete<TSuccess, TFailure>(this IApiService api, string url, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_DELETE, config, token).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_DELETE, config, token).FailGracefully().Result<TSuccess, TFailure>();
     }
 
     /// <summary>
@@ -308,9 +333,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<TResult?> Delete<TResult, TData>(this IApiService api, string url, TData data, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<TResult?> Delete<TResult, TData>(this IApiService api, string url, TData data, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_DELETE, config, token).Body(data)).Result<TResult>();
+        return api.Create(url, VERB_DELETE, config, token).Body(data).Result<TResult>();
     }
 
     /// <summary>
@@ -325,9 +350,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Delete<TSuccess, TFailure, TData>(this IApiService api, string url, TData data, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Delete<TSuccess, TFailure, TData>(this IApiService api, string url, TData data, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_DELETE, config, token).Body(data).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_DELETE, config, token).Body(data).FailGracefully().Result<TSuccess, TFailure>();
     }
 
     /// <summary>
@@ -341,9 +366,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<T?> Delete<T>(this IApiService api, string url, (string key, string val)[] formData, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<T?> Delete<T>(this IApiService api, string url, (string key, string val)[] formData, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_DELETE, config, token).Body(formData)).Result<T>();
+        return api.Create(url, VERB_DELETE, config, token).Body(formData).Result<T>();
     }
 
     /// <summary>
@@ -358,9 +383,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Delete<TSuccess, TFailure>(this IApiService api, string url, (string key, string val)[] data, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Delete<TSuccess, TFailure>(this IApiService api, string url, (string key, string val)[] data, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_DELETE, config, token).Body(data).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_DELETE, config, token).Body(data).FailGracefully().Result<TSuccess, TFailure>();
     }
 
     /// <summary>
@@ -373,9 +398,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<T?> Delete<T>(this IApiService api, string url, HttpContent content, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<T?> Delete<T>(this IApiService api, string url, HttpContent content, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_DELETE, config, token).BodyContent(content)).Result<T>();
+        return api.Create(url, VERB_DELETE, config, token).BodyContent(content).Result<T>();
     }
 
     /// <summary>
@@ -389,9 +414,9 @@ public static class ApiServiceExtensions
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>A task representing the results of the request</returns>
-    public static Task<HttpStatusResult<TSuccess, TFailure>> Delete<TSuccess, TFailure>(this IApiService api, string url, HttpContent content, Action<IHttpBuilderConfig>? config = null, CancellationToken? token = null)
+    public static Task<HttpStatusResult<TSuccess, TFailure>> Delete<TSuccess, TFailure>(this IApiService api, string url, HttpContent content, Action<IHttpBuilder>? config = null, CancellationToken? token = null)
     {
-        return ((IHttpBuilder)api.Create(url, VERB_DELETE, config, token).BodyContent(content).FailGracefully()).Result<TSuccess, TFailure>();
+        return api.Create(url, VERB_DELETE, config, token).BodyContent(content).FailGracefully().Result<TSuccess, TFailure>();
     }
     #endregion
 }

@@ -5,14 +5,15 @@
 /// </summary>
 public interface IApiService
 {
-    /// <summary>
-    /// Creates an <see cref="IHttpBuilder"/> for the given URL and method
-    /// </summary>
-    /// <param name="url">The url to request data from</param>
-    /// <param name="json">The JSON provider to use for this request</param>
-    /// <param name="method">The method used for this HTTP request</param>
-    /// <returns>An instance of the <see cref="IHttpBuilder"/></returns>
-    IHttpBuilder Create(string url, IJsonService json, string method);
+	/// <summary>
+	/// Creates an <see cref="IHttpBuilder"/> for the given URL and method
+	/// </summary>
+	/// <param name="url">The url to request data from</param>
+	/// <param name="json">The JSON provider to use for this request</param>
+	/// <param name="method">The method used for this HTTP request</param>
+	/// <param name="token">The cancellation token for the request</param>
+	/// <returns>An instance of the <see cref="IHttpBuilder"/></returns>
+	IHttpBuilder Create(string url, IJsonService? json = null, string? method = null, CancellationToken? token = null);
 
     /// <summary>
     /// Creates an <see cref="IHttpBuilder"/> for the given URL and method
@@ -22,7 +23,7 @@ public interface IApiService
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>An instance of the <see cref="IHttpBuilder"/></returns>
-    IHttpBuilder Create(string url, string method, Action<IHttpBuilderConfig>? config, CancellationToken? token);
+    IHttpBuilder Create(string url, string? method = null, Action<IHttpBuilder>? config = null, CancellationToken? token = null);
 }
 
 /// <summary>
@@ -35,14 +36,20 @@ public class ApiService(
     IJsonService _json) : IApiService
 {
     /// <summary>
-    /// Creates an <see cref="IHttpBuilder"/> for the given URL and method
+    /// The default method to use
     /// </summary>
-    /// <param name="url">The url to request data from</param>
-    /// <param name="json">The JSON provider to use for this request</param>
-    /// <param name="method">The method used for this HTTP request</param>
-    /// <returns>An instance of the <see cref="IHttpBuilder"/></returns>
-    public virtual IHttpBuilder Create(string url, IJsonService json, string method) 
-        => (IHttpBuilder)new HttpBuilder(_factory, json).Method(method).Uri(url);
+    public const string DEFAULT_METHOD = ApiServiceExtensions.VERB_GET;
+
+	/// <summary>
+	/// Creates an <see cref="IHttpBuilder"/> for the given URL and method
+	/// </summary>
+	/// <param name="url">The url to request data from</param>
+	/// <param name="json">The JSON provider to use for this request</param>
+	/// <param name="method">The method used for this HTTP request</param>
+	/// <param name="token">The cancellation token for the request</param>
+	/// <returns>An instance of the <see cref="IHttpBuilder"/></returns>
+	public virtual IHttpBuilder Create(string url, IJsonService? json, string? method, CancellationToken? token) 
+        => new HttpBuilder(_factory, json ?? _json).CancelWith(token ?? CancellationToken.None).Method(method ?? DEFAULT_METHOD).Uri(url);
 
     /// <summary>
     /// Creates an <see cref="IHttpBuilder"/> for the given URL and method
@@ -52,6 +59,6 @@ public class ApiService(
     /// <param name="config">Any optional configuration necessary</param>
     /// <param name="token">The cancellation token for the request</param>
     /// <returns>An instance of the <see cref="IHttpBuilder"/></returns>
-    public virtual IHttpBuilder Create(string url, string method, Action<IHttpBuilderConfig>? config, CancellationToken? token) 
-        => (IHttpBuilder)Create(url, _json, method).CancelWith(token).With(config);
+    public virtual IHttpBuilder Create(string url, string? method, Action<IHttpBuilder>? config, CancellationToken? token) 
+        => Create(url, _json, method, token).With(config);
 }

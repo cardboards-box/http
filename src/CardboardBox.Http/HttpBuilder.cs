@@ -117,7 +117,9 @@ public class HttpBuilder(
     private readonly List<Action<HttpRequestMessage>> _messageEdits = [];
     private readonly List<Action<HttpClient>> _clientEdits = [];
     private Func<IHttpClientFactory, HttpClient>? _clientFactory;
-    private readonly CancellationTokenSource _cancelSource = new();
+    private CancellationTokenSource? _cancelSource;
+    private readonly List<CancellationToken> _cancellationTokens = [];
+    private readonly List<CancellationTokenRegistration> _cancellationRegistrations = [];
 
     private bool _failWithNull = false;
 
@@ -211,11 +213,13 @@ public class HttpBuilder(
     /// <returns>The instance of <see cref="IHttpBuilder"/> for chaining</returns>
     public virtual IHttpBuilder CancelWith(CancellationToken? token)
     {
-        token?.Register(() =>
+        if (token is { CanBeCanceled: true } cancellation)
         {
-            if (_cancelSource.IsCancellationRequested) return;
-            _cancelSource.Cancel();
-        });
+            _cancellationTokens.Add(cancellation);
+            if (_cancelSource is not null)
+                _cancellationRegistrations.Add(cancellation.Register(static state =>
+                    ((CancellationTokenSource)state!).Cancel(), _cancelSource));
+        }
         return this;
     }
     #endregion
@@ -230,9 +234,10 @@ public class HttpBuilder(
     {
         try
         {
+            var token = CreateCancellationToken();
             TriggerStarted();
             using var client = CreateHttpClient();
-            var resp = await MakeRequest(client, false, _cancelSource.Token);
+            var resp = await MakeRequest(client, false, token);
             TriggerFinished(null);
             return resp;
         }
@@ -243,6 +248,7 @@ public class HttpBuilder(
 
             throw;
         }
+        finally { ReleaseCancellation(); }
     }
 
     /// <summary>
@@ -255,10 +261,11 @@ public class HttpBuilder(
     {
         try
         {
+            var token = CreateCancellationToken();
             TriggerStarted();
             using var client = CreateHttpClient();
-            using var resp = await MakeRequest(client, true, _cancelSource.Token);
-            var data = await Json<T>(resp, _cancelSource.Token);
+            using var resp = await MakeRequest(client, true, token);
+            var data = await Json<T>(resp, token);
             TriggerFinished(null);
             return data;
         }
@@ -269,6 +276,7 @@ public class HttpBuilder(
 
             throw;
         }
+        finally { ReleaseCancellation(); }
     }
 
     /// <summary>
@@ -281,10 +289,11 @@ public class HttpBuilder(
     {
         try
         {
+            var token = CreateCancellationToken();
             TriggerStarted();
             using var client = CreateHttpClient();
-            using var resp = await MakeRequest(client, true, _cancelSource.Token);
-            var data = await Json<TSuccess, TFailure>(resp, _cancelSource.Token);
+            using var resp = await MakeRequest(client, true, token);
+            var data = await Json<TSuccess, TFailure>(resp, token);
             TriggerFinished(null);
             return data;
         }
@@ -296,6 +305,7 @@ public class HttpBuilder(
 
             throw;
         }
+        finally { ReleaseCancellation(); }
     }
     #endregion
 
@@ -322,7 +332,18 @@ public class HttpBuilder(
     /// <returns>The cancellation token</returns>
     public virtual CancellationToken CreateCancellationToken()
     {
+        _cancelSource ??= _cancellationTokens.Count == 0
+            ? new CancellationTokenSource()
+            : CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokens.ToArray());
         return _cancelSource.Token;
+    }
+
+    private void ReleaseCancellation()
+    {
+        foreach (var registration in _cancellationRegistrations) registration.Dispose();
+        _cancellationRegistrations.Clear();
+        _cancelSource?.Dispose();
+        _cancelSource = null;
     }
 
     /// <summary>

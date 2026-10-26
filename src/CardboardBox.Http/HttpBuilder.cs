@@ -334,7 +334,7 @@ public class HttpBuilder(
     {
         _cancelSource ??= _cancellationTokens.Count == 0
             ? new CancellationTokenSource()
-            : CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokens.ToArray());
+            : CancellationTokenSource.CreateLinkedTokenSource([.. _cancellationTokens]);
         return _cancelSource.Token;
     }
 

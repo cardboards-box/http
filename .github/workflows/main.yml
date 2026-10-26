@@ -27,7 +27,6 @@ jobs:
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Json/CardboardBox.Json.csproj
           TAG_COMMIT: true
-          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
           VERSION_STATIC: ${{ steps.version.outputs.version-without-v }}
 
       - name: Publish Newtonsoft Json Nuget Package
@@ -36,7 +35,6 @@ jobs:
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Json.Newtonsoft/CardboardBox.Json.Newtonsoft.csproj
           TAG_COMMIT: false
-          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
           VERSION_STATIC: ${{ steps.version.outputs.version-without-v }}
           
       - name: Publish Http Nuget Package
@@ -45,7 +43,6 @@ jobs:
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Http/CardboardBox.Http.csproj
           TAG_COMMIT: false
-          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
           VERSION_STATIC: ${{ steps.version.outputs.version-without-v }}
           
       - name: Publish Http Files Nuget Package
@@ -54,7 +51,6 @@ jobs:
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Http.Files/CardboardBox.Http.Files.csproj
           TAG_COMMIT: false
-          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
           VERSION_STATIC: ${{ steps.version.outputs.version-without-v }}
           
       - name: Publish Http Html Nuget Package
@@ -63,7 +59,6 @@ jobs:
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Http.Html/CardboardBox.Http.Html.csproj
           TAG_COMMIT: false
-          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
           VERSION_STATIC: ${{ steps.version.outputs.version-without-v }}
           
       - name: Publish Http Handlers Nuget Package
@@ -72,5 +67,4 @@ jobs:
         with:
           PROJECT_FILE_PATH: src/CardboardBox.Http.Handlers/CardboardBox.Http.Handlers.csproj
           TAG_COMMIT: false
-          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
           VERSION_STATIC: ${{ steps.version.outputs.version-without-v }}
